@@ -86,10 +86,12 @@ namespace Prsi
 
                 while (true)
                 {
-                    foreach (var card in PlayedCards)
-                    {
-                        Console.WriteLine($"{card.Name} {card.Type}");
-                    }
+                    // played cards print
+                    var playedCardsString = string.Join(", ", PlayedCards);
+
+                    
+                    Console.WriteLine($"Played cards: {playedCardsString}");
+                    
                     foreach (var player in PlayerList)
                     {
                         Play(player);
@@ -110,19 +112,14 @@ namespace Prsi
 
             public void Play(PrsiPlayer player)
             {
-                int choice = 0;
-                if (player.Type == "computer")
+                int choice;
+                choice = player.Type == "computer" ? ComputerPlay(player) : PlayerPlay(player);
+
+
+                if (choice == 0)
                 {
-                    // AI things
-                    choice = 1;
-                    Console.WriteLine($"{player.Cards[choice].Name} {player.Cards[choice].Type}");
-                }
-                else
-                {
-                    ShowCards(player);
-                    Console.WriteLine("What card to play");
-                    // validate if input = number
-                    choice = Int32.Parse(Console.ReadLine()); // todo use Choice.NumberRangeValidation() instead
+                    Console.WriteLine($"Drawing one card for {player.Name}");
+                    return;
                 }
 
                 // first card or if the last card played is the same type or name as the selected one
@@ -133,12 +130,39 @@ namespace Prsi
                 else
                 {
                     Console.WriteLine("That card cant be played right now");
-                
+                    
                 }
-
-
             }
 
+            public int PlayerPlay(PrsiPlayer player)
+            {
+                Console.WriteLine("Player cards:");
+                ShowCards(player);
+                Console.Write("What card to play - (0 = Draw one): ");
+                // validate if input = number
+                var choice = Int32.Parse(Console.ReadLine()); // todo use Choice.NumberRangeValidation() instead
+                return choice;
+            }
+
+            public int ComputerPlay(PrsiPlayer player)
+            {
+                Console.WriteLine("Enemy cards");
+                ShowCards(player);
+                var choice = 1;
+                if (PlayedCards.Count == 0) return choice;
+                foreach (var card in player.Cards)
+                {
+                    if (card.Type == PlayedCards.Last().Type || card.Name == PlayedCards.Last().Name)
+                    {
+                        Console.WriteLine($"Selected {card.Name} {card.Type}");
+                        return choice;
+                    }
+
+                    choice++;
+                }
+
+                return 0;
+            }
             public void PlayCard(Card card, PrsiPlayer player)
             {
                 PlayedCards.Add(card);
