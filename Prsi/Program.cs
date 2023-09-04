@@ -32,8 +32,7 @@ namespace Prsi
             public List<Card> PlayedCards = new List<Card>();
 
             public List<Card> CardsInDeck = new List<Card>();
-            public Card CurrentCard { get; set; }
-            public PrsiPlayer RealPlayer { get; set; }
+            public Dictionary<int,PrsiPlayer> PositionPlayer { get; set; }
 
             private readonly List<string> _typeList = new List<string>
             {
@@ -44,7 +43,7 @@ namespace Prsi
             {
                 "7", "8", "9", "10", "spodek", "svrsek", "eso"
             };
-
+            #endregion
             public Prsi(string playerName, List<string> AiPlayers)
             {
                 #region Create Cards
@@ -59,40 +58,45 @@ namespace Prsi
 
                 #endregion
 
-                #region NPC Players
+                #region Player initiation + giving cards
+                // add person player
+                PlayerList?.Add(new PrsiPlayer(playerName, "real"));
 
+                // add npc players
                 foreach (var aiPlayerName in AiPlayers)
                 {
                     if (PlayerList != null) PlayerList.Add(new PrsiPlayer(aiPlayerName, "computer"));
                 }
 
+                // match players with their position in the queue
+                PositionPlayer = new Dictionary<int, PrsiPlayer>();
+                var i = 1;
+                foreach (var player in PlayerList)
+                {
+                    PositionPlayer.Add(i, player);
+                    i++;
+                }
+
+                // give cards to all players
+                GiveCards(4);
                 #endregion
 
-                // add person player
-                PlayerList?.Add(new PrsiPlayer(playerName, "real"));
 
-                // give cards
-                GiveCards(4);
-
-                var startingPlayer = WhoGoesFirst(PlayerList.Count);
-
-                var currentPlayer = PlayerList[startingPlayer];
-
-                ShowCards(currentPlayer);
-
-                Card CurrentCard = null;
-
-                RealPlayer = PlayerList.Find(a => a.Status == "real");
-
+                
 
                 while (true)
                 {
-                    Play(RealPlayer); // the current player plays
+                    foreach (var card in PlayedCards)
+                    {
+                        Console.WriteLine($"{card.Name} {card.Type}");
+                    }
+                    foreach (var player in PlayerList)
+                    {
+                        Play(player);
+                    }
                 }
-
-
             }
-            #endregion
+            
 
             public void ShowCards(PrsiPlayer player)
             {
@@ -106,19 +110,40 @@ namespace Prsi
 
             public void Play(PrsiPlayer player)
             {
+                int choice = 0;
                 if (player.Type == "computer")
                 {
                     // AI things
-                    
+                    choice = 1;
+                    Console.WriteLine($"{player.Cards[choice].Name} {player.Cards[choice].Type}");
                 }
                 else
                 {
+                    ShowCards(player);
                     Console.WriteLine("What card to play");
                     // validate if input = number
-                    var choice = Int32.Parse(Console.ReadLine()); // todo use Choice.NumberRangeValidation() instead
+                    choice = Int32.Parse(Console.ReadLine()); // todo use Choice.NumberRangeValidation() instead
                 }
+
+                // first card or if the last card played is the same type or name as the selected one
+                if (PlayedCards.Count == 0 || player.Cards[choice].Type == PlayedCards.Last().Type || player.Cards[choice].Name == PlayedCards.Last().Name)
+                {
+                    PlayCard(player.Cards[choice],player);
+                } 
+                else
+                {
+                    Console.WriteLine("That card cant be played right now");
+                
+                }
+
+
             }
 
+            public void PlayCard(Card card, PrsiPlayer player)
+            {
+                PlayedCards.Add(card);
+                player.Cards.Add(card);
+            }
 
             public void GiveCards(int howManyCardsToEachPlayer)
                 {
